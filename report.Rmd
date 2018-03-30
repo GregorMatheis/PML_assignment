@@ -11,8 +11,8 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Summary
 
-In the context of quantified self movement many devices messure movement constently.
-Devices meassured belt, forarm, arm and dumbell movement. The data are used to meassure quality of barbell lifts.
+In the context of quantified self movement many devices measure movement contently.
+Devices measured belt, forearm, arm and dumbbell movement. The data are used to measure quality of barbell lifts.
 
 ## Preperations
 
@@ -36,7 +36,7 @@ pml_test<-read.csv("Data/pml-testing.csv",  na.strings = c("NA", "#DIV/0!", ""))
 
 #### Selecting usable columns
 
-- Excluding date and device informations
+- Excluding date and device information
 - Excluding all variables with missing values
 
 ```{r}
@@ -85,9 +85,9 @@ corrplot(correlations, method="circle")
 
 ## Using random forest
 
-- Within the carret package a random forest can be applied very easiely
+- Within the carret package a random forest can be applied very easily
 
-- Due to size of dataset i recommend using a parallel version of random forest
+- Due to size of data set i recommend using a parallel version of random forest
 
 #### Setting up model
 ```{r}
@@ -117,4 +117,4 @@ confusionMatrix(pml_train_test$classe, model1_rf_pred)
 
 - Sensitivity and specificity are very high
 
-- Model is suitable to predict classe variable
+- Model is suitable to predict classes variable

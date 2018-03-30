@@ -1,0 +1,120 @@
+---
+title: "PML Course - Assignment Week 4 - Reports"
+author: "Gregor Matheis"
+date: "March 30, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Summary
+
+In the context of quantified self movement many devices messure movement constently.
+Devices meassured belt, forarm, arm and dumbell movement. The data are used to meassure quality of barbell lifts.
+
+## Preperations
+
+#### Packages
+
+```{r}
+library(tidyverse)
+library(corrplot)
+library(caret)
+library(readr)
+library(doParallel)
+```
+
+#### Data reading
+
+```{r}
+pml_training<-read.csv("Data/pml-training.csv",  na.strings = c("NA", "#DIV/0!", ""))
+pml_test<-read.csv("Data/pml-testing.csv",  na.strings = c("NA", "#DIV/0!", ""))
+
+```
+
+#### Selecting usable columns
+
+- Excluding date and device informations
+- Excluding all variables with missing values
+
+```{r}
+pml_training<-pml_training[,!grepl("^X|timestamp|window", names(pml_training))]
+pml_test<-pml_test[,!grepl("^X|timestamp|window", names(pml_training))]
+
+classe<-pml_training$classe
+pml_training<-pml_training[,sapply(pml_training, is.numeric)]
+pml_training$classe<-classe
+cols<-apply(pml_training,2, function(x)any(is.na(x)))
+cols<-names(cols[!cols])
+pml_training<-pml_training[,cols]
+
+
+problem_id<-pml_test$problem_id
+pml_test<-pml_test[,sapply(pml_test, is.numeric)]
+pml_test<-pml_test[,cols[1:52]]
+pml_test$problem_id<-problem_id
+```
+
+#### Subsetting training data into test and train
+
+```{r}
+inTrain<-createDataPartition(pml_training$classe, p=.7, list = F)
+pml_train<-pml_training[inTrain,]
+pml_train_test<-pml_training[-inTrain,]
+```
+
+## Data summary
+
+Used variables and their summary
+```{r}
+data.frame(
+"Min" = round(sapply(pml_train[,1:52], min, na.rm=T),2),
+"Mean" = round(sapply(pml_train[,1:52], mean, na.rm=T),2),
+"SD" = round(sapply(pml_train[,1:52], sd, na.rm=T),2),
+"Max" = round(sapply(pml_train[,1:52], max, na.rm=T),2))
+```
+
+#### Data correlation
+
+```{r}
+correlations<-cor(pml_train[,1:52])
+corrplot(correlations, method="circle")
+```
+
+## Using random forest
+
+- Within the carret package a random forest can be applied very easiely
+
+- Due to size of dataset i recommend using a parallel version of random forest
+
+#### Setting up model
+```{r}
+registerDoParallel(cores = 8) #number of cores that is available depents on your laptop
+controlRf <- trainControl(method="cv", 5)
+
+model1_rf<-
+      train(classe~., data=pml_train,
+            method="parRF", trControl=controlRf, 
+            importance=TRUE, ntree=100)
+```
+
+#### Model sumamry
+```{r}
+model1_rf
+```
+
+#### Model prediction quality
+```{r}
+model1_rf_pred<-predict(model1_rf, pml_train_test)
+confusionMatrix(pml_train_test$classe, model1_rf_pred)
+```
+
+#### Interpretation
+
+- The predictors are able to make accurate predictions
+
+- Sensitivity and specificity are very high
+
+- Model is suitable to predict classe variable
